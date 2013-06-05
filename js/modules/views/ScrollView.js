@@ -7,6 +7,16 @@ define([
 
 ], function(_, Backbone, Widget, bufferCell, BufferModel){
 	
+	var ListViewAdapter = {
+
+		getView: function(idx){
+			return bufferCell.el;
+		},
+
+		
+
+	}
+
 	var ScrollView = Widget.extend({
 		
 		template: {
@@ -31,7 +41,7 @@ define([
 		_iscrollDefaults: {
 			hScroll: true,
 			vScroll: true,
-			bounce: true,
+			bounce: false,
 			snap: 'li',
 			bounceLock: false,
 			momentum: false,
@@ -63,7 +73,13 @@ define([
 				self.iScroll.itemsLength = self.getItemsLength();
 				self.iScroll.maxVisibleItems = self.getMaxVisibleItemsNo();
 				self.iScroll.maxCurrentIndex = self.getMaxCurrentIndex();
-				self.changeItemsIndexes();
+				console.log('max', self.iScroll.maxCurrentIndex)
+
+				// self.changeItemsIndexes();
+
+				// $('#scroller').find('ul').css({
+				// 	height: '600px'
+				// });
 			});
 			$('body').css({
 				background: 'gray'
@@ -121,7 +137,8 @@ define([
 		getMaxCurrentIndex: function(){
 			var maxIndex = this.iScroll.itemsLength -
 						   this.iScroll.maxVisibleItems;
-			return maxIndex;
+			// return maxIndex;
+			return 50;
 		},
 		/**
 		 *	Update the layout to math the current visible items from the list
@@ -136,8 +153,13 @@ define([
 		 */
 		updateCurrentIndex: function(deltaItems){
 			// console.log(this.iScroll.currentIndex , deltaItems)
+			console.log('max current index', this.iScroll.maxCurrentIndex)
+			console.log('current index',this.iScroll.currentIndex)
+			console.log('delta',deltaItems)
+
+			console.log('different', this.iScroll.currentIndex !== deltaItems )
 			if (   deltaItems < 0
-				&& this.iScroll.currentIndex !== deltaItems 
+				// && this.iScroll.currentIndex !== deltaItems 
 				&& deltaItems > - this.iScroll.maxCurrentIndex - 1 )
 			{
 				var direction = (this.iScroll.currentIndex > deltaItems) ? 'down' : 'up';
@@ -171,13 +193,25 @@ define([
 			var headBufferIndex = - this.iScroll.currentIndex;
 			var tailBufferIndex = - this.iScroll.currentIndex + 
 									this.iScroll.maxVisibleItems;
+			var appendPos, removePos;
 			if (direction === 'down') {
-				console.log('remove', headBufferIndex - 1);	
+				console.log('down');
+				console.log('remove', headBufferIndex - 1);
 				console.log('append', tailBufferIndex + 1);
+				removePos =  headBufferIndex - 1;
+				appendPos = tailBufferIndex + 1;
+				this.recycleDown(appendPos, removePos);
 			} else if (direction === 'up'){
+				console.log('up')
 				console.log('append', headBufferIndex);	
 				console.log('remove', tailBufferIndex + 2);
+				appendPos =  headBufferIndex;
+				removePos = tailBufferIndex + 2;
+				this.recycleUp(removePos, appendPos);
 			}
+			// this.removeItem(removePos);
+			// this.appendItem(appendPos);
+
 
 			// this.generateItemsRange(headBufferIndex, tailBufferIndex);
 		},
@@ -188,11 +222,60 @@ define([
 			}
 		},
 
-		removeItem: function(pos){
-			
+		recycleUp: function(tPos, hPos){
+			this.removeTail(tPos);
+			this.appendHead(hPos);
 		},
 
-		appendItem: function(pos){}
+		recycleDown: function(tPos, hPos){
+			this.removeHead(tPos);
+			this.appendTail(hPos);
+		},
+
+
+		// removeItem: function(pos){
+		// 	console.log('removing:', pos)
+		// 	var idx = pos - 1;
+		// 	this.$el.find('li:eq(0)').remove();
+		// },
+
+		// appendItem: function(pos){
+		// 	console.log('appending:', pos)
+		// 	var view = ListViewAdapter.getView(pos);
+		// 	$("ul li:eq("+pos+")").after( view.el );
+		// },
+
+		removeHead: function(pos){
+			console.log('removeHead:', pos)
+			$('ul li:eq(0)').remove();
+			var padding = parseInt( $('ul').css('padding').replace('px', '') );
+			padding += this.getItemsHeight()
+			$('ul').css({
+				'padding-top': padding
+			})
+		},
+
+		removeTail: function(pos){
+			console.log('removeTail:', pos)
+			$('ul li:last').remove();
+			var padding = parseInt( $('ul').css('padding').replace('px', '') );
+			padding -= this.getItemsHeight()
+			$('ul').css({
+				'padding-top': padding
+			})
+		},
+
+		appendHead: function(pos){
+			console.log('appendHead:', pos)
+			var view = ListViewAdapter.getView(pos);
+			$("ul").prepend( $('<li class="cell"> cell '+pos+' </li>') );
+		},
+
+		appendTail: function(pos){
+			console.log('appendTail:', pos )
+			var view = ListViewAdapter.getView(pos);
+			$("ul").append( $('<li class="cell"> cell '+pos+' </li>') );
+		}
 
 
 	});

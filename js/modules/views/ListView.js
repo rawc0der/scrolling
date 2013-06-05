@@ -6,6 +6,8 @@ define([
 
 ], function(_, Backbone, Widget, bufferCell){
 	
+
+	
 	var ListView = Widget.extend({
 		
 		template: {
